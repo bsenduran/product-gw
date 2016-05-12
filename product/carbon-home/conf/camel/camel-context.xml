@@ -53,6 +53,23 @@ classpath:org/wso2/carbon/gateway/xml/camel-spring.xsd">
             </get>
         </rest>
 
+        <!--        <rest path="/hello">
+                    <get uri="/world/{path}">
+                        <to uri="direct:gwrestone"/>
+                    </get>
+                </rest>
+
+                <route>
+                    <from uri="direct:gwrestone"/>
+                    <toD uri="wso2-gw:http://localhost:8080/hello/world/${property.path}"/>
+                </route>-->
+
+        <route>
+            <from uri="wso2-gw:/hello/world/{path}"/>
+            <toD uri="wso2-gw:http://localhost:8080/hello/world/${property.path}"/>
+        </route>
+
+
         <!-- sample routes corresponding to the rest interfaces -->
         <route>
             <from uri="direct:getNews"/>
@@ -76,10 +93,33 @@ classpath:org/wso2/carbon/gateway/xml/camel-spring.xsd">
                     <to uri="wso2-gw:http://localhost:9001/services/SimpleStockQuoteService"/>
                 </when>
                 <otherwise>
-                    <to uri="wso2-gw:http://localhost:9004/services/SimpleStockQuoteService"/>
+                    <setHeader headerName="CamelHttpResponseCode">
+                        <constant>404</constant>
+                    </setHeader>
+                    <setBody>
+                        <constant>routeId header not found / invalid</constant>
+                    </setBody>
                 </otherwise>
             </choice>
         </route>
+
+
+        <route id="load-balanced">
+            <from uri="wso2-gw:/loadbalanced"/>
+            <loadBalance>
+                <roundRobin/>
+                <to uri="wso2-gw:http://localhost:9000/services/SimpleStockQuoteService"/>
+                <to uri="wso2-gw:http://localhost:9001/services/SimpleStockQuoteService"/>
+            </loadBalance>
+        </route>
+
+        <route id="service-chaining">
+            <from uri="wso2-gw:/servicechaining"/>
+            <to uri="wso2-gw:http://localhost:9000/services/SimpleStockQuoteService"/>
+            <to uri="wso2-gw:http://localhost:8080/echo"/>
+        </route>
+
+
 
     </camelContext>
 
